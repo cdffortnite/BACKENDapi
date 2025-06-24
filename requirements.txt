@@ -5,3 +5,4 @@ flask-limiter
 requests
 python-dotenv
 mysql-connector-python
+gunicorn
