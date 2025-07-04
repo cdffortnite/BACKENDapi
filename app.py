@@ -25,7 +25,7 @@ limiter = Limiter(
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
-# Configuração do banco MySQL (com base no seu Database.php)
+# Configuração do banco MySQL
 db_config = {
     'host': os.getenv("MYSQL_HOST", "localhost"),
     'user': os.getenv("MYSQL_USER", "root"),
@@ -36,7 +36,7 @@ db_config = {
 # Histórico por usuário
 user_conversations = {}
 
-# Contexto base do sistema
+# Contexto base
 CONTEXT_ESTOQUE_FUNCIONARIOS = (
     "Você é um assistente virtual do sistema de controle de estoque e funcionários da empresa. "
     "Você responde perguntas sobre produtos cadastrados, estoque atual e funcionários da equipe. "
@@ -79,6 +79,7 @@ def chat():
         conn.close()
 
     except Exception as e:
+        print("Erro ao acessar banco de dados:", e)
         return jsonify({"error": f"Erro ao acessar banco de dados: {str(e)}"}), 500
 
     # Monta contexto dinâmico
@@ -96,7 +97,6 @@ def chat():
         f"- Gerentes: {nomes_gerentes}\n"
     )
 
-    # Histórico
     if user_id not in user_conversations:
         user_conversations[user_id] = [{"role": "system", "content": system_prompt}]
 
@@ -114,7 +114,16 @@ def chat():
         "messages": user_conversations[user_id]
     }
 
-    response = requests.post(DEEPSEEK_URL, headers=headers, json=payload)
+    print("CHAVE DEEPSEEK:", DEEPSEEK_API_KEY)
+    print("Payload enviado para DeepSeek:", payload)
+
+    try:
+        response = requests.post(DEEPSEEK_URL, headers=headers, json=payload, timeout=15)
+        print("Resposta da DeepSeek:", response.status_code)
+        print("Corpo da resposta:", response.text)
+    except Exception as e:
+        print("Erro ao chamar DeepSeek:", e)
+        return jsonify({"error": f"Erro ao chamar DeepSeek: {str(e)}"}), 500
 
     if response.status_code != 200:
         return jsonify({"error": f"Erro na API DeepSeek: {response.status_code}"}), response.status_code
@@ -128,4 +137,3 @@ def chat():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
