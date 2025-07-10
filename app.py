@@ -70,6 +70,9 @@ def chat():
         cursor.execute("SELECT COUNT(*) as total_funcionarios FROM funcionarios")
         funcionarios_info = cursor.fetchone()
 
+        cursor.execute("SELECT COUNT(*) as total_usuarios FROM usuarios")
+        usuarios_info = cursor.fetchone()
+
         cursor.execute("SELECT nome_produto FROM estoque ORDER BY data_entrada DESC LIMIT 1")
         ultimo_produto = cursor.fetchone()
 
@@ -86,6 +89,7 @@ def chat():
     # Monta contexto dinâmico
     estoque_total = estoque_info['total_produtos']
     funcionarios_total = funcionarios_info['total_funcionarios']
+    usuarios_total     = usuarios_info['total_usuarios']
     ultimo_nome = ultimo_produto['nome_produto'] if ultimo_produto else "Nenhum produto cadastrado"
     nomes_gerentes = ", ".join([g['nome'] for g in gerentes]) if gerentes else "Nenhum gerente cadastrado"
 
@@ -95,6 +99,7 @@ def chat():
         f"- Total de produtos no estoque: {estoque_total}\n"
         f"- Último produto cadastrado: {ultimo_nome}\n"
         f"- Total de funcionários: {funcionarios_total}\n"
+        f"- Total de usuários cadastrados: {usuarios_total}\n"
         f"- Gerentes: {nomes_gerentes}\n"
     )
 
