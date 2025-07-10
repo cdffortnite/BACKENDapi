@@ -1,6 +1,7 @@
 import os
 import requests
-import mysql.connector
+import psycopg2
+import psycopg2.extras
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_compress import Compress
@@ -25,12 +26,12 @@ limiter = Limiter(
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
-# Configuração do banco MySQL
+# Configuração do banco PostgreSQL
 db_config = {
-    'host': os.getenv("MYSQL_HOST", "localhost"),
-    'user': os.getenv("MYSQL_USER", "root"),
-    'password': os.getenv("MYSQL_PASSWORD", ""),
-    'database': os.getenv("MYSQL_DATABASE", "projetoantes")
+    'host': os.getenv("POSTGRES_HOST"),
+    'user': os.getenv("POSTGRES_USER"),
+    'password': os.getenv("POSTGRES_PASSWORD"),
+    'dbname': os.getenv("POSTGRES_DB")
 }
 
 # Histórico por usuário
@@ -60,8 +61,8 @@ def chat():
 
     # Conecta no banco e busca dados
     try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor(dictionary=True)
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         cursor.execute("SELECT COUNT(*) as total_produtos FROM estoque")
         estoque_info = cursor.fetchone()
@@ -72,7 +73,7 @@ def chat():
         cursor.execute("SELECT nome_produto FROM estoque ORDER BY data_entrada DESC LIMIT 1")
         ultimo_produto = cursor.fetchone()
 
-        cursor.execute("SELECT nome FROM funcionarios WHERE cargo LIKE '%gerente%'")
+        cursor.execute("SELECT nome FROM funcionarios WHERE cargo ILIKE '%gerente%'")
         gerentes = cursor.fetchall()
 
         cursor.close()
